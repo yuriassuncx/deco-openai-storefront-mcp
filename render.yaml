@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: deco-storefront-mcp
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+
+    # Render injects the PORT env var automatically; the server reads it.
+    # Set the variables below in the Render dashboard (Environment tab) or
+    # add them to the envVars section with real values.
+    healthCheckPath: /healthz
+
+    envVars:
+      # ── Required ───────────────────────────────────────────────────────────
+      - key: MCP_ENDPOINT
+        # Falls back to the public deco.cx demo storefront if not set.
+        # Replace with your own deco.cx MCP endpoint, e.g.:
+        #   https://mystore.deco.site/mcp
+        value: https://storefront.deco.site/mcp
+
+      # ── Recommended ────────────────────────────────────────────────────────
+      - key: STORE_NAME
+        value: Storefront
+
+      # ── Widget appearance (baked in at build time via Docker ARG) ──────────
+      # To customise these you need to set them as Docker build args in Render:
+      #   Dashboard → Service → Settings → Build & Deploy → Docker Build Args
+      # - VITE_WIDGET_ACCENT_COLOR=#000000
+      # - VITE_WIDGET_LOGO_URL=
+
+      # ── Optional CDN domains for product images ────────────────────────────
+      - key: WIDGET_IMAGE_DOMAINS
+        value: ""
