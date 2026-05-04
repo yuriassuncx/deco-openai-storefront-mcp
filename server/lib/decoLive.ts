@@ -22,6 +22,38 @@ export const MCP_ENDPOINT =
 
 let _rpcId = 1;
 
+/**
+ * Simple in-memory cookie jar keyed by hostname.
+ * Stores the raw cookie string (name=value pairs) to forward in Cookie headers.
+ * This is required for Shopify/VTEX session continuity (cart token cookies).
+ */
+const _cookieJar = new Map<string, Map<string, string>>();
+
+function jarKey(endpoint: string): string {
+  try { return new URL(endpoint).hostname; } catch { return endpoint; }
+}
+
+function storeCookies(endpoint: string, setCookieHeaders: string[]): void {
+  const host = jarKey(endpoint);
+  if (!_cookieJar.has(host)) _cookieJar.set(host, new Map());
+  const jar = _cookieJar.get(host)!;
+  for (const raw of setCookieHeaders) {
+    // Only take the first segment (name=value), ignore attributes
+    const nameVal = raw.split(";")[0].trim();
+    const eq = nameVal.indexOf("=");
+    if (eq < 1) continue;
+    const name = nameVal.slice(0, eq).trim();
+    const value = nameVal.slice(eq + 1).trim();
+    jar.set(name, value);
+  }
+}
+
+function getCookieHeader(endpoint: string): string | undefined {
+  const jar = _cookieJar.get(jarKey(endpoint));
+  if (!jar || jar.size === 0) return undefined;
+  return [...jar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
+}
+
 function extractSseJson(body: string): string | null {
   for (const event of body.split(/\r?\n\r?\n/g)) {
     const lines = event.split(/\r?\n/g).filter((l) => l.startsWith("data:"));
@@ -43,14 +75,27 @@ async function rpc<T>(
 ): Promise<T> {
   const body = { jsonrpc: "2.0", id: _rpcId++, method, params };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json, text/event-stream",
+  };
+  const cookieHeader = getCookieHeader(endpoint);
+  if (cookieHeader) headers["Cookie"] = cookieHeader;
+
   const res = await fetch(endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream",
-    },
+    headers,
     body: JSON.stringify(body),
   });
+
+  // Persist any session cookies the upstream sends back
+  const setCookieValues = res.headers.getSetCookie
+    ? res.headers.getSetCookie()
+    : (res.headers.get("set-cookie") ?? "").split(/,(?=[^ ])/).filter(Boolean);
+  if (setCookieValues.length) {
+    storeCookies(endpoint, setCookieValues);
+    console.error(`[decoLive] Stored ${setCookieValues.length} cookie(s) from ${jarKey(endpoint)}`);
+  }
 
   if (!res.ok) {
     throw new Error(`Upstream MCP HTTP ${res.status} for "${method}": ${await res.text().catch(() => "")}`);
@@ -191,6 +236,9 @@ type ToolRegistry = {
 
 let _registry: ToolRegistry | null = null;
 
+/** Cached Shopify cart ID extracted from the last cartView/cartAdd response. */
+let _cachedCartId: string | null = null;
+
 /** Fetch and cache the upstream tool registry. One call per process. */
 export async function getToolRegistry(): Promise<ToolRegistry> {
   if (_registry) return _registry;
@@ -267,7 +315,10 @@ function translateArgs(
     case "cartAdd": {
       const sku = asStr(args.sku) ?? asStr(args.productId) ?? "";
       const quantity = asNum(args.quantity) ?? 1;
-      if (isShopify(toolName)) return { lines: [{ merchandiseId: sku, quantity }] };
+      if (isShopify(toolName)) {
+        const cartId = asStr(args.cartId) ?? _cachedCartId ?? undefined;
+        return { cartId, lines: [{ merchandiseId: sku, quantity }] };
+      }
       if (isVtex(toolName)) return { orderItems: [{ id: sku, quantity }] };
       return args;
     }
@@ -733,10 +784,25 @@ export async function callCapability(
       arguments: translatedArgs,
     });
 
-    return sanitiseResult(result ?? {
+    const sanitised = sanitiseResult(result ?? {
       content: [{ type: "text", text: "No response from upstream tool." }],
       structuredContent: { view: "message", message: "No response from upstream tool." },
     }, capability);
+
+    // Cache the cart ID from cartView/cartAdd responses so subsequent cartAdd
+    // calls (especially Shopify) can bind to the same cart session.
+    if (capability === "cartView" || capability === "cartAdd") {
+      const cartSc = sanitised.structuredContent;
+      if (isRecord(cartSc) && isRecord(cartSc.cart)) {
+        const cartId = asString((cartSc.cart as Record<string, unknown>).orderFormId);
+        if (cartId) {
+          _cachedCartId = cartId;
+          console.error(`[decoLive] Cached cartId: ${cartId}`);
+        }
+      }
+    }
+
+    return sanitised;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[decoLive] callCapability(${capability}) error:`, msg);
