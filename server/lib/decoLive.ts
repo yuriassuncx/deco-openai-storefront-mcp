@@ -447,11 +447,20 @@ function mapVariantToProduct(v: SchemaVariant): Record<string, unknown> | null {
  * a proper { view: "product-list", products: [...] } structuredContent. */
 function buildProductListStructure(result: McpToolResult): Record<string, unknown> | undefined {
   const text = result.content?.[0]?.text;
+  const sc = result.structuredContent;
+  // Diagnostic logging — remove after root-cause confirmed
+  console.error("[decoLive] buildProductListStructure — content text length:", text?.length ?? 0);
+  console.error("[decoLive] buildProductListStructure — structuredContent keys:", sc ? Object.keys(sc).join(",") : "null");
+  if (text) console.error("[decoLive] buildProductListStructure — text preview:", text.slice(0, 400));
   if (!text) return undefined;
 
   let raw: unknown;
   try { raw = JSON.parse(text); } catch { return undefined; }
-  if (!Array.isArray(raw)) return undefined;
+  if (!Array.isArray(raw)) {
+    console.error("[decoLive] buildProductListStructure — text is not an array, type:", typeof raw, Array.isArray(raw) ? "array" : isRecord(raw) ? "object keys: " + Object.keys(raw as object).join(",") : "");
+    return undefined;
+  }
+  console.error("[decoLive] buildProductListStructure — array length:", raw.length, "first item keys:", raw[0] ? Object.keys(raw[0] as object).join(",") : "empty");
 
   const seen     = new Set<string>();
   const products: Record<string, unknown>[] = [];
