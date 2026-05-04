@@ -1,0 +1,42 @@
+{
+  "name": "deco-openai-storefront-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.29.2",
+  "description": "OpenAI Storefront MCP server template — deco.cx powered, Farm Rio SDK pattern.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node --import tsx/esm build.mts",
+    "start": "node --env-file-if-exists=.env --import tsx/esm server/server.ts",
+    "dev": "node --env-file-if-exists=.env --watch --import tsx/esm server/server.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm typecheck && pnpm build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^4.5.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.536.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+.ui-text-muted {
+  color: var(--ui-muted);
+}
+
+.ui-text-subtle {
+  color: var(--ui-subtle);
+}
+
+.ui-card-surface {
+  background: var(--ui-card);
+  border: 1px solid var(--ui-border);
+  box-shadow: var(--ui-shadow-soft);
+}
+
+.ui-panel-surface {
+  background: linear-gradient(180deg, var(--ui-surface-elevated) 0%, var(--ui-surface) 100%);
+  border: 1px solid var(--ui-border);
+}
+
+.ui-floating-surface {
+  background: var(--ui-surface-elevated);
+  border: 1px solid var(--ui-border);
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.ui-image-surface {
+  background: var(--ui-image-surface);
+}
+
+.ui-secondary-button {
+  background: var(--ui-surface-elevated);
+  border: 1px solid var(--ui-border);
+  color: var(--ui-text);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.ui-secondary-button:hover {
+  background: var(--ui-pill);
+  border-color: var(--ui-border-strong);
+}
+
+.ui-icon-button {
+  color: var(--ui-muted);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.ui-icon-button:hover {
+  background: var(--ui-pill);
+  color: var(--ui-text);
+}
+
+.ui-pill-button {
+  background: var(--ui-pill);
+  border: 1px solid var(--ui-border);
+  color: var(--ui-muted);
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.ui-pill-button:hover {
+  background: var(--ui-pill-strong);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text);
+}
+
+.ui-back-button {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 20;
+  width: fit-content;
+}
+
+.ui-danger-button:hover {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger);
+}
+
+/* Utility: hide native scrollbar while keeping scroll functionality */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
