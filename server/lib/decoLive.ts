@@ -591,13 +591,32 @@ function buildCartStructure(result: McpToolResult, includeView: boolean): Record
 
   const platformCart = getNestedRecord(structured, "platformCart") ?? structured;
   const storefront = getNestedRecord(structured, "storefront");
-  const lineNodes = getNestedArray(platformCart, "lines", "nodes");
+
+  // Shopify Storefront API uses either lines.nodes (newer) or lines.edges[].node (classic GraphQL)
+  const lineNodesRaw = getNestedArray(platformCart, "lines", "nodes");
+  const lineEdges = getNestedArray(platformCart, "lines", "edges");
+  const lineNodes = lineNodesRaw.length > 0
+    ? lineNodesRaw
+    : lineEdges.map((edge) => (isRecord(edge) ? edge.node : edge)).filter(isRecord);
+
+  // Also check top-level `lines` if it's a direct array (some deco.cx adapters)
+  const linesTopLevel = getNestedArray(platformCart, "lines");
+  const resolvedLines = lineNodes.length > 0
+    ? lineNodes
+    : Array.isArray(linesTopLevel) && linesTopLevel.every(isRecord)
+      ? linesTopLevel
+      : [];
+
+  console.error("[decoLive] buildCartStructure — platformCart keys:", Object.keys(platformCart).join(","));
+  console.error("[decoLive] buildCartStructure — lineNodesRaw:", lineNodesRaw.length, "lineEdges:", lineEdges.length, "linesTopLevel:", linesTopLevel.length);
+  if (resolvedLines[0]) console.error("[decoLive] buildCartStructure — first line keys:", Object.keys(resolvedLines[0] as object).join(","));
+
   const storefrontItems = getNestedArray(storefront, "items");
-  const sourceLength = Math.max(lineNodes.length, storefrontItems.length);
+  const sourceLength = Math.max(resolvedLines.length, storefrontItems.length);
   const items: JsonRecord[] = [];
 
   for (let index = 0; index < sourceLength; index += 1) {
-    const mapped = buildCartItem(lineNodes[index], storefrontItems[index]);
+    const mapped = buildCartItem(resolvedLines[index], storefrontItems[index]);
     if (mapped) items.push(mapped);
   }
 
