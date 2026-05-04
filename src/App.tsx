@@ -469,6 +469,7 @@ export function App() {
           totals={visibleToolOutput.totals}
           accentColor={accentColor}
           capabilities={capabilities}
+          storefrontUrl={storefrontUrl}
           onOpenDetail={openDetail}
         />
       );
