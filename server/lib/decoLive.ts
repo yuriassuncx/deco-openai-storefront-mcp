@@ -630,6 +630,30 @@ function buildCartItem(lineNode: unknown, storefrontItem: unknown): JsonRecord |
   };
 }
 
+/**
+ * Shopify cart IDs are GIDs: "gid://shopify/Cart/c1-abc123..."
+ * Extract the token portion so it can be used safely in URLs and caching.
+ */
+function extractCartToken(id: unknown): string | undefined {
+  const raw = asString(id);
+  if (!raw) return undefined;
+  if (raw.startsWith("gid://shopify/Cart/")) return raw.slice("gid://shopify/Cart/".length);
+  return raw;
+}
+
+/**
+ * Build a Shopify checkout URL from a cart GID or token when the API
+ * response does not include an explicit checkoutUrl field.
+ * Format: https://cdn.shopify.com/s/files/... is not usable; the cart
+ * checkout URL is: /cart/c/<token> relative to the storefront origin.
+ * We return null here so CartView can use its own storefrontUrl fallback.
+ */
+function buildShopifyCheckoutUrl(_id: unknown): string | undefined {
+  // We don't know the shop domain here, so return undefined and let the
+  // CartView fallback construct the URL using storefrontUrl + orderFormId.
+  return undefined;
+}
+
 function buildCartStructure(result: McpToolResult, includeView: boolean): Record<string, unknown> | undefined {
   const structured = isRecord(result.structuredContent)
     ? result.structuredContent
@@ -685,12 +709,14 @@ function buildCartStructure(result: McpToolResult, includeView: boolean): Record
     ...(includeView ? { view: items.length ? "cart" : "cart" } : {}),
     cart: {
       items,
-      orderFormId: asString(platformCart.id),
+      orderFormId: extractCartToken(platformCart.id),
       couponCode,
       couponDiscount: couponSavings,
       shippingCost: 0,
       checkoutUrl: asString(platformCart.checkoutUrl)
-        ?? asString(storefront?.checkoutHref),
+        ?? asString(structured.checkoutUrl)
+        ?? asString(storefront?.checkoutHref)
+        ?? buildShopifyCheckoutUrl(platformCart.id),
     },
     totals: {
       subtotal,
