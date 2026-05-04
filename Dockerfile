@@ -33,9 +33,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
-# Copy server source and pre-built widget
+# Copy server source and pre-built widget (assets built in stage 1)
 COPY server ./server
-COPY assets ./assets
+COPY --from=builder /app/assets ./assets
 COPY tsconfig.json ./
 
 # tsx is a dev dep but needed at runtime (no compile step); install it explicitly
