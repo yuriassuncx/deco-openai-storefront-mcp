@@ -1,3 +1,13 @@
+---
+title: Deco OpenAI Storefront MCP
+emoji: 🛍️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # deco-openai-storefront-mcp
 
 An [OpenAI Storefront SDK](https://platform.openai.com/docs) MCP server that

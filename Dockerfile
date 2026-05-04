@@ -45,10 +45,10 @@ RUN pnpm add tsx
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-EXPOSE 3000
+EXPOSE 7860
 
 # MCP_ENDPOINT defaults to the public deco.cx storefront (fallback)
 ENV MCP_ENDPOINT=https://storefront.deco.site/mcp
-ENV PORT=3000
+ENV PORT=7860
 
 CMD ["node", "--import", "tsx/esm", "server/server.ts"]
