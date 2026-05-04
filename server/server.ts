@@ -80,6 +80,7 @@ const MIME_TYPE = "text/html+skybridge";
 const SERVER_NAME = "deco-storefront";
 const SERVER_VERSION = "0.1.0";
 const STORE_NAME = process.env.STORE_NAME ?? "Storefront";
+const STOREFRONT_URL = MCP_ENDPOINT.replace(/\/mcp\/?$/, "");
 
 // Extra image/resource domains (comma-separated, set per-store in .env)
 const WIDGET_IMAGE_DOMAINS = (process.env.WIDGET_IMAGE_DOMAINS ?? "")
@@ -373,6 +374,7 @@ function createStorefrontServer(): Server {
           // Private widget-only metadata (hidden from model)
           storeName: STORE_NAME,
           capabilities: TOOL_CAPABILITIES,
+          storefrontUrl: STOREFRONT_URL,
         },
       };
     }

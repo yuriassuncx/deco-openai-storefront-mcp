@@ -19,10 +19,11 @@ interface CartViewProps {
   totals?: CartTotals;
   accentColor: string;
   capabilities?: StorefrontCapabilities;
+  storefrontUrl?: string;
   onOpenDetail: (p: Product) => void;
 }
 
-export function CartView({ cart, totals, accentColor, capabilities, onOpenDetail }: CartViewProps) {
+export function CartView({ cart, totals, accentColor, capabilities, storefrontUrl, onOpenDetail }: CartViewProps) {
   const accentTextColor = getContrastTextColor(accentColor);
   const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const total =
@@ -199,8 +200,13 @@ export function CartView({ cart, totals, accentColor, capabilities, onOpenDetail
       <button
         type="button"
         onClick={() => {
-          if (cart.checkoutUrl) {
-            openExternal(cart.checkoutUrl);
+          const checkoutUrl =
+            cart.checkoutUrl ??
+            (cart.orderFormId
+              ? `${storefrontUrl ?? "https://storefront.deco.site"}/cart/c/${cart.orderFormId}`
+              : null);
+          if (checkoutUrl) {
+            openExternal(checkoutUrl);
             return;
           }
           sendMessage("Proceed to checkout");

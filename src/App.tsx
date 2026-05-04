@@ -100,6 +100,7 @@ export function App() {
   const [widgetState, updateWidgetState] = useWidgetState();
 
   const storeName = toolMeta?.storeName ?? "Store";
+  const storefrontUrl = toolMeta?.storefrontUrl as string | undefined;
   const accentColor = WIDGET_ACCENT_COLOR;
   const logoUrl = WIDGET_LOGO_URL;
 
@@ -118,6 +119,9 @@ export function App() {
 
   useEffect(() => {
     if (toolOutput?.view === "cart" || toolOutput?.view === "cart-error" || toolOutput?.cart) {
+      setIsCartPending(false);
+    } else if (isCartPending && toolOutput !== null && toolOutput !== undefined) {
+      // Response came back but without cart data — stop spinning
       setIsCartPending(false);
     }
     if (
@@ -355,6 +359,7 @@ export function App() {
               totals={toolOutput.totals}
               accentColor={accentColor}
               capabilities={capabilities}
+              storefrontUrl={storefrontUrl}
               onOpenDetail={openDetail}
             />
           ) : isCartPending ? (

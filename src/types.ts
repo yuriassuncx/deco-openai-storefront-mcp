@@ -159,6 +159,7 @@ export type EcommerceState = {
 export type ToolMeta = {
   storeName?: string;
   capabilities?: StorefrontCapabilities;
+  storefrontUrl?: string;
   [key: string]: unknown;
 };
 
